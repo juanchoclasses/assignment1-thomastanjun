@@ -43,15 +43,80 @@ export class FormulaEvaluator {
     * 
    */
 
-  evaluate(formula: FormulaType) {
-
-
+  evaluate(formula: FormulaType)  {
     // set the this._result to the length of the formula
+
+    
+    let leftParen = 0;
+    let rightParen = 0;
+    let operatornum = 0;
+    let numberCount = 0;
+
+    let messageIndicator = 1;
+
+    if (formula.length == 0) {
+      messageIndicator = 0;
+    }
+
+    for (let i = 0; i < formula.length; i++) {
+      let token = formula[i];
+
+      if (token == "(") {
+        leftParen++; 
+      }
+      else if (token == ")") {
+        rightParen++;
+      }
+      else if (this.isOperator(token) == true) {
+        operatornum++;
+        if (i == 0 || i == formula.length - 1) {
+          messageIndicator = 10;
+          break;
+        }
+        else{
+          let prevtoken = formula[i - 1];
+          let nexttoken = formula[i + 1];
+          if (this.isOperator(prevtoken) == true || this.isOperator(nexttoken) == true) {
+            messageIndicator = 12;
+            break;
+          }
+        }
+      }
+      else{
+        if (i == 0){
+          let nexttoken = formula[i + 1];
+          if (this.isOperator(nexttoken) != true) {
+            messageIndicator = 10;
+            break;
+          }
+        }
+        else if (i == formula.length - 1) {
+          let prevtoken = formula[i - 1];
+          if (this.isOperator(prevtoken) != true) {
+            messageIndicator = 10;
+            break;
+          }
+        }
+        else {
+          let prevtoken = formula[i - 1];
+          let nexttoken = formula[i + 1];
+          if (this.isOperator(prevtoken) != true || this.isOperator(nexttoken) != true) {
+            messageIndicator = 10;
+            break;
+          }
+        }
+        numberCount++;
+      }
+    }
+
+    if (leftParen != rightParen) {
+      messageIndicator = 13;
+    }
 
     this._result = formula.length;
     this._errorMessage = "";
 
-    switch (formula.length) {
+    switch (messageIndicator) {
       case 0:
         this._errorMessage = ErrorMessages.emptyFormula;
         break;
@@ -90,8 +155,14 @@ export class FormulaEvaluator {
     return this._result;
   }
 
-
-
+  /**
+   * 
+   * @param token 
+   * @returns true if the token is an operator
+   */
+  isOperator(token: TokenType): boolean {
+    return token === "+" || token === "-" || token === "*" || token === "/";
+  }
 
   /**
    * 
