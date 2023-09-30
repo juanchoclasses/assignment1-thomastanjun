@@ -17,8 +17,8 @@ import { PortsGlobal } from '../PortsGlobal';
 
 class SpreadSheetClient {
     private _serverPort: number = PortsGlobal.serverPort;
-    private _baseURL: string = `http://pencil.local:${this._serverPort}`;
-    private _userName: string = 'juancho';
+    private _baseURL: string = `http://localhost:${this._serverPort}`;
+    private _userName: string ;
     private _documentName: string = 'test';
     private _document: DocumentTransport;
 
@@ -185,7 +185,9 @@ class SpreadSheetClient {
      * @returns 
      */
     public setEditStatus(isEditing: boolean): void {
-
+        if (!this._userName){
+            window.alert('Please enter a user name');
+        }
         // request edit statut sof the current cell
         let requestEditViewURL = `${this._baseURL}/document/cell/view/${this._documentName}/${this._document.currentCell}`;
         if (isEditing) {
@@ -209,13 +211,17 @@ class SpreadSheetClient {
 
 
     public addToken(token: string): void {
+        if (token === '/') {
+            token = '%2F';
+        }
+
         const requestAddTokenURL = `${this._baseURL}/document/addtoken/${this._documentName}/${token}`;
-        fetch(requestAddTokenURL, {
+        fetch (requestAddTokenURL, {
             method: 'PUT',
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ "userName": this._userName })
+            body: JSON.stringify({ "userName": this._userName }) 
         })
             .then(response => {
 
@@ -246,6 +252,9 @@ class SpreadSheetClient {
     }
 
     public removeToken(): void {
+        if (!this._userName){
+            window.alert('Please enter a user name');
+        }
         const requestRemoveTokenURL = `${this._baseURL}/document/removetoken/${this._documentName}`;
         fetch(requestRemoveTokenURL, {
             method: 'PUT',
@@ -263,6 +272,9 @@ class SpreadSheetClient {
     }
 
     public requestViewByLabel(label: string): void {
+        if (!this._userName){
+            window.alert('Please enter a user name');
+        }
         const requestViewURL = `${this._baseURL}/document/cell/view/${this._documentName}/${label}`;
         console.log(this._userName);
         fetch(requestViewURL, {
@@ -280,7 +292,36 @@ class SpreadSheetClient {
     }
 
     public clearFormula(): void {
-        return;
+        if (!this._userName){
+            window.alert('Please enter a user name');
+        }
+
+        const requestClearFormulaURL = `${this._baseURL}/document/clear/formula/${this._documentName}`;
+        
+        fetch(requestClearFormulaURL, {
+        
+        method: 'PUT',
+        
+        headers: {
+        
+        'Content-Type': 'application/json'
+        
+         },
+        
+        body: JSON.stringify({ "userName": this._userName })
+        
+         })
+        
+         .then(response => {
+        
+        return response.json() as Promise<DocumentTransport>;
+        
+         }).then((document: DocumentTransport) => {
+        
+        this._updateDocument(document);
+        
+         });
+        
     }
 
 
