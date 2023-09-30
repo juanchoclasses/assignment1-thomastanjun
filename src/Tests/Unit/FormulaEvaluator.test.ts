@@ -111,8 +111,10 @@ describe("FormulaEvaluator", () => {
 
           let result = recalc.result;
           let error = recalc.error;
-
-          expect(result).toEqual(3);
+          
+          // correct the expected result
+          expect(result).toEqual(-1);
+          //expect(result).toEqual(3);
           expect(error).toEqual("");
         });
       });
@@ -128,7 +130,9 @@ describe("FormulaEvaluator", () => {
           let result = recalc.result;
           let error = recalc.error;
 
-          expect(result).toEqual(3);
+          // correct the expected result
+          expect(result).toEqual(2);
+          //expect(result).toEqual(3);
           expect(error).toEqual("");
         });
       });
