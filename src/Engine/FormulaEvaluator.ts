@@ -47,25 +47,26 @@ export class FormulaEvaluator {
     // set the this._result to the length of the formula
 
     
-    let leftParen = 0;
-    let rightParen = 0;
+    let parenthesesCount = 0;
     let operatornum = 0;
     let numberCount = 0;
 
     let messageIndicator = 1;
 
-    if (formula.length == 0) {
-      messageIndicator = 0;
-    }
+
 
     for (let i = 0; i < formula.length; i++) {
       let token = formula[i];
 
       if (token == "(") {
-        leftParen++; 
+        parenthesesCount++; 
       }
       else if (token == ")") {
-        rightParen++;
+        if (parenthesesCount == 0) {
+          messageIndicator = 13;
+          break;
+        }
+        parenthesesCount--;
       }
       else if (this.isOperator(token) == true) {
         operatornum++;
@@ -82,17 +83,15 @@ export class FormulaEvaluator {
           }
         }
       }
-      else{
-        if (i == 0){
-          let nexttoken = formula[i + 1];
-          if (this.isOperator(nexttoken) != true) {
+      else if (formula.length > 1 && this.isCellReference(token) == true) {
+        if (i == 0 ) {
+          if (this.isOperator(formula[i + 1]) != true) {
             messageIndicator = 10;
             break;
           }
         }
         else if (i == formula.length - 1) {
-          let prevtoken = formula[i - 1];
-          if (this.isOperator(prevtoken) != true) {
+          if (this.isOperator(formula[i - 1]) != true) {
             messageIndicator = 10;
             break;
           }
@@ -101,15 +100,18 @@ export class FormulaEvaluator {
           let prevtoken = formula[i - 1];
           let nexttoken = formula[i + 1];
           if (this.isOperator(prevtoken) != true || this.isOperator(nexttoken) != true) {
-            messageIndicator = 10;
+            messageIndicator = 9;
             break;
           }
         }
-        numberCount++;
       }
     }
+    
+    if (formula.length == 0) {
+      messageIndicator = 0;
+    }
 
-    if (leftParen != rightParen) {
+    if (parenthesesCount != 0) {
       messageIndicator = 13;
     }
 
