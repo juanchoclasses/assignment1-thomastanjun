@@ -48,8 +48,6 @@ export class FormulaEvaluator {
 
     
     let parenthesesCount = 0;
-    let operatornum = 0;
-    let numberCount = 0;
 
     let messageIndicator = 1;
     const operators: string[] = [];
@@ -57,25 +55,25 @@ export class FormulaEvaluator {
 
     function calculate(){
       const operator = operators.pop();
-      const left: number = values.pop()!;
-      const right: number = values.pop()!;
+      const rightNumber: number = values.pop()!;
+      const leftNumber: number = values.pop()!;
 
       switch(operator){
         case "+":
-          values.push(left + right);
+          values.push(leftNumber + rightNumber);
           break;
         case "-":
-          values.push(right - left);
+          values.push(leftNumber - rightNumber);
           break;
         case "*":
-          values.push(left * right);
+          values.push(leftNumber * rightNumber);
           break;
         case "/":
-          if (left == 0){
+          if (rightNumber == 0){
             messageIndicator = 8;
             break;
           }
-          values.push(right / left);
+          values.push(leftNumber / rightNumber);
           break;
       }
     }
@@ -111,7 +109,6 @@ export class FormulaEvaluator {
         parenthesesCount--;
       }
       else if (this.isOperator(token) == true) {
-        operatornum++;
         if (i == 0 || i == formula.length - 1) {
           messageIndicator = 10;
           break;
@@ -125,7 +122,10 @@ export class FormulaEvaluator {
           }
           if ((token == '+' || token == '-' && operators.length > 0) && (operators[operators.length - 1] == '*'
             || operators[operators.length - 1] == '/')) {
-            calculate();
+            while (operators.length > 0 && (operators[operators.length - 1] != '+'
+              || operators[operators.length - 1] != '-')){
+              calculate();
+            }
           }
           operators.push(token);
         }
@@ -147,14 +147,22 @@ export class FormulaEvaluator {
           let prevtoken = formula[i - 1];
           let nexttoken = formula[i + 1];
           if (this.isOperator(prevtoken) != true || this.isOperator(nexttoken) != true) {
-            messageIndicator = 9;
+            messageIndicator = 10;
             break;
           }
         }
         values.push(this.getCellValue(token)[0]);
+        if (this.getCellValue(token)[1] != "") {
+          messageIndicator = 10;
+          break;
+        }
       }
       else if (formula.length == 1 && this.isCellReference(token) == true) {
         values.push(this.getCellValue(token)[0]);
+        if (this.getCellValue(token)[1] == ErrorMessages.invalidCell) {
+          messageIndicator = 9;
+          break;
+        }
       }
       else if (this.isNumber(token) == true) {
         values.push(Number(token));
