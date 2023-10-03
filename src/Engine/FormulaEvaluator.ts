@@ -44,15 +44,17 @@ export class FormulaEvaluator {
    */
 
   evaluate(formula: FormulaType)  {
-    // set the this._result to the length of the formula
 
     
     let parenthesesCount = 0;
-
+    // Set the initial error message indicator to 1
     let messageIndicator = 1;
+
+    // Two stakcs for operators and values
     const operators: string[] = [];
     const values: number[] = [];
 
+    // Calculate the result of the one single operation
     function calculate(){
       const operator = operators.pop();
       const rightNumber: number = values.pop()!;
@@ -78,9 +80,11 @@ export class FormulaEvaluator {
       }
     }
 
+    // Loop through the formula and check for errors and push the values and operators to the stacks
     for (let i = 0; i < formula.length; i++) {
       let token = formula[i];
 
+      // if there's a left parenthesis, its previous and next token can only be an operator or a left parenthesis
       if (token == "(") {
         if (i != 0) {
           let prevtoken = formula[i - 1];
@@ -92,27 +96,40 @@ export class FormulaEvaluator {
         parenthesesCount++; 
         operators.push(token);
       }
+      
       else if (token == ")") {
+        // if there's no left parenthesis before the right parenthesis, there is an error
         if (parenthesesCount == 0) {
           messageIndicator = 13;
           break;
         }
+        // if there's nothing between patenthesis, there is an error
         else if (formula[i-1] == "(") {
           parenthesesCount--;
           messageIndicator = 13;
           break;
         }
+        // if the previous token is an opertor, there is an error
+        else if (this.isOperator(formula[i-1]) == true) {
+          parenthesesCount--;
+          messageIndicator = 10;
+          break;
+        }
+        // if the parenthesis is valid, calculate the result between the parenthesis
         while (operators[operators.length - 1] != "(") {
           calculate();
         }
         operators.pop();
         parenthesesCount--;
       }
+
       else if (this.isOperator(token) == true) {
+        // if the operator is the first or last token, there is an error
         if (i == 0 || i == formula.length - 1) {
           messageIndicator = 10;
           break;
         }
+        // if the previous or next token is an operator, there is an error
         else{
           let prevtoken = formula[i - 1];
           let nexttoken = formula[i + 1];
@@ -120,6 +137,7 @@ export class FormulaEvaluator {
             messageIndicator = 12;
             break;
           }
+          // if the previous operator in stack has higher precedence, calculate the result on the stack first
           if ((token == '+' || token == '-' && operators.length > 0) && (operators[operators.length - 1] == '*'
             || operators[operators.length - 1] == '/')) {
             while (operators.length > 0 && (operators[operators.length - 1] != '+'
@@ -130,19 +148,23 @@ export class FormulaEvaluator {
           operators.push(token);
         }
       }
+      // if the token is a cell reference, get the value of the cell
       else if (formula.length > 1 && this.isCellReference(token) == true) {
+        // if the cell is the first token, its next token can only be an operator
         if (i == 0 ) {
           if (this.isOperator(formula[i + 1]) != true) {
             messageIndicator = 10;
             break;
           }
         }
+        // if the cell is the last token, its previous token can only be an operator
         else if (i == formula.length - 1) {
           if (this.isOperator(formula[i - 1]) != true) {
             messageIndicator = 10;
             break;
           }
         }
+        // if the cell is not the first or last token, its previous and next token can only be an operator
         else {
           let prevtoken = formula[i - 1];
           let nexttoken = formula[i + 1];
@@ -151,12 +173,14 @@ export class FormulaEvaluator {
             break;
           }
         }
+        // if the reference cell has an error, there is an error, else push the value to the stack
         values.push(this.getCellValue(token)[0]);
         if (this.getCellValue(token)[1] != "") {
           messageIndicator = 10;
           break;
         }
       }
+      // if there's only one token and it's a cell reference, get the value of the cell
       else if (formula.length == 1 && this.isCellReference(token) == true) {
         values.push(this.getCellValue(token)[0]);
         if (this.getCellValue(token)[1] == ErrorMessages.invalidCell) {
@@ -164,19 +188,23 @@ export class FormulaEvaluator {
           break;
         }
       }
+      // if the token is a number, simply push the value to the stack, because all errors have been checked
       else if (this.isNumber(token) == true) {
         values.push(Number(token));
       }
     }
     
+    // if the formula is empty, set the message to be empty formula
     if (formula.length == 0) {
       messageIndicator = 0;
     }
 
+    // if there's still left parenthesis, there is an error
     if (parenthesesCount != 0) {
       messageIndicator = 13;
     }
 
+    // calculate all operations on the stack
     while (operators.length > 0) {
       calculate();
     }
@@ -187,13 +215,14 @@ export class FormulaEvaluator {
     else {
       this._result = 0;
     }
-
+    // if left parentheses and right parentheses are equal but there's no value between, set value to 0
     if (parenthesesCount == 0 && messageIndicator == 13) {
       this._result = 0;
     }
     
     this._errorMessage = "";
 
+    // set the error message according to the message indicator
     switch (messageIndicator) {
       case 0:
         this._errorMessage = ErrorMessages.emptyFormula;
